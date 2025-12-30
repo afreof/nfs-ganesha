@@ -34,7 +34,7 @@ target_link_libraries(ganesha_trace
   ${LTTNG_LIBRARIES}
 )
 
-install(TARGETS ganesha_trace COMPONENT tracing DESTINATION ${LIB_INSTALL_DIR} )
+install(TARGETS ganesha_trace COMPONENT tracing DESTINATION ${CMAKE_INSTALL_LIBDIR} )
 
 add_library(ganesha_trace_symbols INTERFACE)
 target_sources(ganesha_trace_symbols INTERFACE ${CMAKE_CURRENT_LIST_DIR}/lttng_defines.c)

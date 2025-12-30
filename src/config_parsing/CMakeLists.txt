@@ -82,7 +82,7 @@ if(RADOS_URLS)
   include_directories(${RADOS_INCLUDE_DIR})
   set_target_properties(ganesha_rados_urls PROPERTIES SOVERSION
     "${GANESHA_MAJOR_VERSION}${GANESHA_MINOR_VERSION}")
-  install(TARGETS ganesha_rados_urls LIBRARY DESTINATION ${LIB_INSTALL_DIR})
+  install(TARGETS ganesha_rados_urls LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 endif(RADOS_URLS)
 

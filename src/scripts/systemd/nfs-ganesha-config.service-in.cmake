@@ -4,4 +4,4 @@ DefaultDependencies=no
 
 [Service]
 Type=oneshot
-ExecStart=@LIBEXECDIR@/ganesha/nfs-ganesha-config.sh
+ExecStart=@CMAKE_INSTALL_LIBEXECDIR@/ganesha/nfs-ganesha-config.sh

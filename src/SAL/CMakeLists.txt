@@ -81,7 +81,7 @@ if(USE_RADOS_RECOV)
   include_directories(${RADOS_INCLUDE_DIR})
   set_target_properties(ganesha_rados_recov PROPERTIES SOVERSION
     "${GANESHA_MAJOR_VERSION}${GANESHA_MINOR_VERSION}")
-  install(TARGETS ganesha_rados_recov LIBRARY DESTINATION ${LIB_INSTALL_DIR})
+  install(TARGETS ganesha_rados_recov LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif(USE_RADOS_RECOV)
 
 ########### install files ###############

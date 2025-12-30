@@ -181,4 +181,4 @@ add_custom_command(
 	)
 add_custom_target(man ALL DEPENDS ${man8_page})
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${man8_page}
-	DESTINATION ${CMAKE_INSTALL_PREFIX}/share/man/man8/)
+	DESTINATION ${CMAKE_INSTALL_MANDIR}/man8/)

@@ -39,6 +39,9 @@ include(CheckLibraryExists)
 include(CheckCSourceCompiles)
 include(TestBigEndian)
 
+# Use standard install directories
+include(GNUInstallDirs)
+
 # Set GANESHA_TOP_CMAKE_DIR to this CMakeLists.txt path
 set(GANESHA_TOP_CMAKE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -58,19 +61,7 @@ ELSE()
 set(GANESHA_BUILD_RELEASE 0)
 ENDIF(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 
-# needs to come after project()
-IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR CMAKE_INSTALL_PREFIX STREQUAL "/usr")
-  SET(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Install prefix for common files" FORCE)
-  message(STATUS "override default CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
-  SET(SYSCONFDIR "/etc" CACHE PATH "Install prefix for common files")
-  SET(SYSSTATEDIR "/var" CACHE PATH "Install prefix for common files")
-ELSE()
-  message(STATUS "was set CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
-  SET(SYSCONFDIR "${CMAKE_INSTALL_PREFIX}/etc" CACHE PATH "Install prefix for common files")
-  SET(SYSSTATEDIR "${CMAKE_INSTALL_PREFIX}/var" CACHE PATH "Install prefix for common files")
-ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR CMAKE_INSTALL_PREFIX STREQUAL "/usr")
-
-SET(RUNTIMEDIR "${SYSSTATEDIR}/run/ganesha" CACHE PATH "Runtime directory (for things like pid file, not touched by install)")
+SET(RUNTIMEDIR "${CMAKE_INSTALL_LOCALSTATEDIR}/run/ganesha" CACHE PATH "Runtime directory (for things like pid file, not touched by install)")
 
 # Extra version is for naming development/RC.  It is blank in stable branches
 # so it can be available to end-users to name local variants/versions
@@ -90,7 +81,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   set(UNIX ON)
   # Now detects the Linux's distro
   set(DISTRO "UNKNOWN")
-  set(LIBEXECDIR "/${CMAKE_INSTALL_PREFIX}/libexec")
 
   EXECUTE_PROCESS(
       COMMAND awk -F=  "/^NAME=/ { print $2 }" /etc/os-release
@@ -112,24 +102,19 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   elseif( ${SYS_RELEASE} MATCHES "SLES" )
      message( STATUS "Detected a Linux SLES machine" )
      set(DISTRO "SLES")
-     set(LIBEXECDIR "/${CMAKE_INSTALL_PREFIX}/lib")
   elseif( ${SYS_RELEASE} MATCHES "openSUSE Leap" )
      message( STATUS "Detected a Linux openSUSE Leap machine" )
      set(DISTRO "SLES")
-     set(LIBEXECDIR "/${CMAKE_INSTALL_PREFIX}/lib")
   elseif( ${SYS_RELEASE} MATCHES "openSUSE Tumbleweed" )
      message( STATUS "Detected a Linux openSUSE Tumbleweed machine" )
      set(DISTRO "SLES")
-     set(LIBEXECDIR "/${CMAKE_INSTALL_PREFIX}/lib")
   elseif( (${SYS_RELEASE} MATCHES "Debian GNU/Linux") OR (${SYS_RELEASE} MATCHES "Ubuntu") )
      message( STATUS "Detected a Linux Debian base machine" )
      set(DISTRO "DEBIAN")
-     set(LIBEXECDIR "/${CMAKE_INSTALL_PREFIX}/lib")
   else( ${SYS_RELEASE} MATCHES "Red Hat" )
      if( ${ID_LIKE} MATCHES "suse" )
          message( STATUS "Detected a SUSE Build server machine" )
          set(DISTRO "SLES")
-         set(LIBEXECDIR "/usr/lib")
      else( ${ID_LIKE} MATCHES "suse" )
          message( STATUS "Detected an UNKNOWN Linux machine" )
          set(DISTRO "UNKNOWN")
@@ -143,14 +128,12 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
   set(UNIX ON)
 # On FreeBSD libc doesn't directly provide libexecinfo, so we have to find it
   set(USE_EXECINFO ON)
-  set(LIBEXECDIR "/${CMAKE_INSTALL_PREFIX}/libexec")
 endif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set(BSDBASED ON)
   set(DARWIN ON)
   set(UNIX ON)
-  set(LIBEXECDIR "/${CMAKE_INSTALL_PREFIX}/libexec")
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -260,19 +243,10 @@ if (MSVC)
 endif(MSVC)
 
 # Library path name
-get_property(USE_LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
-if (USE_LIB64)
-  set(LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib64 CACHE PATH
-    "Specify name of libdir inside install path")
-else (USE_LIB64)
-  set(LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib CACHE PATH
-    "Specify name of libdir inside install path")
-endif (USE_LIB64)
-
 IF(FSAL_DESTINATION)
     set( FSAL_DESTINATION ${FSAL_DESTINATION} )
 ELSE()
-    set( FSAL_DESTINATION "${LIB_INSTALL_DIR}/ganesha")
+    set( FSAL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/ganesha")
 ENDIF()
 
 if (CMAKE_SYSTEM_PROCESSOR MATCHES "unknown")
@@ -1343,7 +1317,7 @@ include_directories(${LIBURCU_INC})
 
 # Config file; make sure it doesn't clobber an existing one
 include(${GANESHA_TOP_CMAKE_DIR}/cmake/modules/InstallPackageConfigFile.cmake)
-InstallPackageConfigFile(${GANESHA_TOP_CMAKE_DIR}/config_samples/ganesha.conf.example ${SYSCONFDIR}/ganesha ganesha.conf)
+InstallPackageConfigFile(${GANESHA_TOP_CMAKE_DIR}/config_samples/ganesha.conf.example ${CMAKE_INSTALL_SYSCONFDIR}/ganesha ganesha.conf)
 
 add_subdirectory(log)
 add_subdirectory(config_parsing)
@@ -1835,7 +1809,7 @@ if (USE_MONITORING)
   target_link_libraries(ganesha.nfsd ganesha_monitoring)
 endif (USE_MONITORING)
 set_target_properties(ganesha.nfsd PROPERTIES COMPILE_FLAGS "-fPIC")
-install(TARGETS ganesha.nfsd COMPONENT daemon DESTINATION bin)
+install(TARGETS ganesha.nfsd COMPONENT daemon DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 ########### next target ###############
 
@@ -1849,7 +1823,7 @@ if (USE_RADOS_RECOV)
     ${RADOS_LIBRARIES}
     ${LDFLAG_DISALLOW_UNDEF}
   )
-  install(TARGETS ganesha-rados-grace COMPONENT tools DESTINATION bin)
+  install(TARGETS ganesha-rados-grace COMPONENT tools DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif(USE_RADOS_RECOV)
 
 ########### next target ###############
@@ -1868,7 +1842,7 @@ if(LINUX)
   )
 
   if( USE_ADMIN_TOOLS )
-    install(TARGETS sm_notify.ganesha COMPONENT daemon DESTINATION bin)
+    install(TARGETS sm_notify.ganesha COMPONENT daemon DESTINATION ${CMAKE_INSTALL_BINDIR})
   endif( USE_ADMIN_TOOLS )
 endif(LINUX)
 

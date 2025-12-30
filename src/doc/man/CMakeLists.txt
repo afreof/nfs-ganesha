@@ -94,7 +94,7 @@ foreach(man ${man_srcs})
   string(REGEX REPLACE ".rst$" "" cmd ${man})
   list(APPEND sphinx_output ${sphinx_output_dir}/${cmd}.8)
   install(FILES ${sphinx_output_dir}/${cmd}.8
-          DESTINATION ${CMAKE_INSTALL_PREFIX}/share/man/man8/)
+          DESTINATION ${CMAKE_INSTALL_MANDIR}/man8/)
 endforeach()
 
 add_custom_command(
