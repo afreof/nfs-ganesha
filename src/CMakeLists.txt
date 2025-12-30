@@ -60,14 +60,14 @@ ENDIF(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithD
 
 # needs to come after project()
 IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR CMAKE_INSTALL_PREFIX STREQUAL "/usr")
-	SET(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Install prefix for common files" FORCE)
-	message(STATUS "override default CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
-	SET(SYSCONFDIR "/etc" CACHE PATH "Install prefix for common files")
-	SET(SYSSTATEDIR "/var" CACHE PATH "Install prefix for common files")
+  SET(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Install prefix for common files" FORCE)
+  message(STATUS "override default CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
+  SET(SYSCONFDIR "/etc" CACHE PATH "Install prefix for common files")
+  SET(SYSSTATEDIR "/var" CACHE PATH "Install prefix for common files")
 ELSE()
-	message(STATUS "was set CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
-	SET(SYSCONFDIR "${CMAKE_INSTALL_PREFIX}/etc" CACHE PATH "Install prefix for common files")
-	SET(SYSSTATEDIR "${CMAKE_INSTALL_PREFIX}/var" CACHE PATH "Install prefix for common files")
+  message(STATUS "was set CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
+  SET(SYSCONFDIR "${CMAKE_INSTALL_PREFIX}/etc" CACHE PATH "Install prefix for common files")
+  SET(SYSSTATEDIR "${CMAKE_INSTALL_PREFIX}/var" CACHE PATH "Install prefix for common files")
 ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR CMAKE_INSTALL_PREFIX STREQUAL "/usr")
 
 SET(RUNTIMEDIR "${SYSSTATEDIR}/run/ganesha" CACHE PATH "Runtime directory (for things like pid file, not touched by install)")
@@ -201,28 +201,28 @@ endif()
 IF( EXISTS ${GANESHA_TOP_CMAKE_DIR}/../.git/HEAD  )
   message( STATUS "Compilation from within a git repository. Using git rev-parse HEAD")
   EXECUTE_PROCESS( COMMAND git rev-parse HEAD
-		   WORKING_DIRECTORY ${GANESHA_TOP_CMAKE_DIR}
-		   OUTPUT_STRIP_TRAILING_WHITESPACE
-		   ERROR_QUIET
+                   WORKING_DIRECTORY ${GANESHA_TOP_CMAKE_DIR}
+                   OUTPUT_STRIP_TRAILING_WHITESPACE
+                   ERROR_QUIET
                    OUTPUT_VARIABLE _GIT_HEAD_COMMIT)
   EXECUTE_PROCESS( COMMAND git describe --long
                    WORKING_DIRECTORY  ${GANESHA_TOP_CMAKE_DIR}
-		   OUTPUT_STRIP_TRAILING_WHITESPACE
-		   ERROR_QUIET
+                   OUTPUT_STRIP_TRAILING_WHITESPACE
+                   ERROR_QUIET
                    OUTPUT_VARIABLE _GIT_DESCRIBE)
 
 ELSE( EXISTS ${GANESHA_TOP_CMAKE_DIR}/../.git/HEAD  )
   message( STATUS "Outside a git repository, use saved data" )
   EXECUTE_PROCESS( COMMAND ${GANESHA_TOP_CMAKE_DIR}/cmake/githead_from_path.sh  ${GANESHA_TOP_CMAKE_DIR}
-		   WORKING_DIRECTORY ${GANESHA_TOP_CMAKE_DIR}
-		   OUTPUT_STRIP_TRAILING_WHITESPACE
-		   ERROR_QUIET
+                   WORKING_DIRECTORY ${GANESHA_TOP_CMAKE_DIR}
+                   OUTPUT_STRIP_TRAILING_WHITESPACE
+                   ERROR_QUIET
                    OUTPUT_VARIABLE _GIT_HEAD_COMMIT)
 
   EXECUTE_PROCESS( COMMAND ${GANESHA_TOP_CMAKE_DIR}/cmake/gitdesc_from_path.sh ARGS ${GANESHA_TOP_CMAKE_DIR}
-		   WORKING_DIRECTORY ${GANESHA_TOP_CMAKE_DIR}
-		   OUTPUT_STRIP_TRAILING_WHITESPACE
-		   ERROR_QUIET
+                   WORKING_DIRECTORY ${GANESHA_TOP_CMAKE_DIR}
+                   OUTPUT_STRIP_TRAILING_WHITESPACE
+                   ERROR_QUIET
                    OUTPUT_VARIABLE _GIT_DESCRIBE)
 
 ENDIF( EXISTS ${GANESHA_TOP_CMAKE_DIR}/../.git/HEAD  )
@@ -262,11 +262,11 @@ endif(MSVC)
 # Library path name
 get_property(USE_LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
 if (USE_LIB64)
-	set(LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib64 CACHE PATH
-		"Specify name of libdir inside install path")
+  set(LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib64 CACHE PATH
+    "Specify name of libdir inside install path")
 else (USE_LIB64)
-	set(LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib CACHE PATH
-		"Specify name of libdir inside install path")
+  set(LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib CACHE PATH
+    "Specify name of libdir inside install path")
 endif (USE_LIB64)
 
 IF(FSAL_DESTINATION)
@@ -278,9 +278,9 @@ ENDIF()
 if (CMAKE_SYSTEM_PROCESSOR MATCHES "unknown")
   # uname -p is broken on this system.  Try uname -m
   EXECUTE_PROCESS( COMMAND uname -m
-		   OUTPUT_STRIP_TRAILING_WHITESPACE
-		   ERROR_QUIET
-		   OUTPUT_VARIABLE ARCH)
+                   OUTPUT_STRIP_TRAILING_WHITESPACE
+                   ERROR_QUIET
+                   OUTPUT_VARIABLE ARCH)
 else (CMAKE_SYSTEM_PROCESSOR MATCHES "unknown")
   set(ARCH ${CMAKE_SYSTEM_PROCESSOR})
 endif (CMAKE_SYSTEM_PROCESSOR MATCHES "unknown")
@@ -555,7 +555,7 @@ endif(HAVE_STRING_H AND HAVE_STRINGS_H)
 IF(_VALGRIND_MEMCHECK)
   check_include_files(valgrind/memcheck.h HAVE_MEMCHECK_H)
   if(NOT HAVE_MEMCHECK_H)
-	  message(FATAL_ERROR "Cannot find valgrind/memcheck.h, install valgrind-devel package to enable _VALGRIND_MEMCHECK")
+          message(FATAL_ERROR "Cannot find valgrind/memcheck.h, install valgrind-devel package to enable _VALGRIND_MEMCHECK")
   ENDIF(NOT HAVE_MEMCHECK_H)
 ENDIF(_VALGRIND_MEMCHECK)
 
@@ -611,10 +611,10 @@ if (USE_ADMIN_TOOLS)
     endif (NOT PYUIC)
     if (NOT PYUIC)
       if (USE_GUI_ADMIN_TOOLS_REQUIRED)
-	message(FATAL_ERROR "Cannot find PyQt but GUI admin tools requested on command line")
+        message(FATAL_ERROR "Cannot find PyQt but GUI admin tools requested on command line")
       else (USE_GUI_ADMIN_TOOLS_REQUIRED)
-	message(WARNING "Cannot find PyQt4 or PyQt5.  Disabling GUI admin tools")
-	set(USE_GUI_ADMIN_TOOLS OFF)
+        message(WARNING "Cannot find PyQt4 or PyQt5.  Disabling GUI admin tools")
+        set(USE_GUI_ADMIN_TOOLS OFF)
       endif (USE_GUI_ADMIN_TOOLS_REQUIRED)
     endif (NOT PYUIC)
   endif (USE_GUI_ADMIN_TOOLS)
@@ -659,10 +659,10 @@ if (USE_FSAL_PROXY_V4)
       )
     if(NOT HAVE_SQLITE3 OR NOT HAVE_SQLITE3_H)
       if(PROXYV4_HANDLE_MAPPING_REQUIRED)
-	message(FATAL_ERROR "Cannot find sqlite3.h or the library but proxyv4 handle mapping requested on command line")
+        message(FATAL_ERROR "Cannot find sqlite3.h or the library but proxyv4 handle mapping requested on command line")
       else(PROXYV4_HANDLE_MAPPING_REQUIRED)
-	message(WARNING "Cannot find sqlite3.h or the library. Disabling proxyv4 handle mapping")
-	set(PROXYV4_HANDLE_MAPPING OFF)
+        message(WARNING "Cannot find sqlite3.h or the library. Disabling proxyv4 handle mapping")
+        set(PROXYV4_HANDLE_MAPPING OFF)
       endif(PROXYV4_HANDLE_MAPPING_REQUIRED)
     endif(NOT HAVE_SQLITE3 OR NOT HAVE_SQLITE3_H)
   endif(PROXYV4_HANDLE_MAPPING)
@@ -688,32 +688,32 @@ if(USE_FSAL_VFS)
     gopt_test(ENABLE_VFS_POSIX_ACL)
     if(ENABLE_VFS_POSIX_ACL)
       if(NOT HAVE_LIBACL)
-	set(ENABLE_VFS_POSIX_ACL OFF)
-	message(WARNING "Could not find libacl")
+        set(ENABLE_VFS_POSIX_ACL OFF)
+        message(WARNING "Could not find libacl")
       endif(NOT HAVE_LIBACL)
       if(NOT HAVE_SYS_ACL_H)
-	set(ENABLE_VFS_POSIX_ACL OFF)
-	message(WARNING "Could not find sys/acl.h")
+        set(ENABLE_VFS_POSIX_ACL OFF)
+        message(WARNING "Could not find sys/acl.h")
       endif(NOT HAVE_SYS_ACL_H)
       if(NOT (HAVE_ACL_GET_FD_NP OR LINUX))
-	set(ENABLE_VFS_POSIX_ACL OFF)
-	message(WARNING "Could not find acl_get_fd_np() and not Linux")
+        set(ENABLE_VFS_POSIX_ACL OFF)
+        message(WARNING "Could not find acl_get_fd_np() and not Linux")
       endif(NOT (HAVE_ACL_GET_FD_NP OR LINUX))
       if(NOT (HAVE_ACL_SET_FD_NP OR LINUX))
-	set(ENABLE_VFS_POSIX_ACL OFF)
-	message(WARNING "Could not find acl_set_fd_np() and not Linux")
+        set(ENABLE_VFS_POSIX_ACL OFF)
+        message(WARNING "Could not find acl_set_fd_np() and not Linux")
       endif(NOT (HAVE_ACL_SET_FD_NP OR LINUX))
       if(ENABLE_VFS_POSIX_ACL)
-	set(ENABLE_VFS_ACL ON)
-	set(USE_ACL_MAPPING ON)
-	# libacl only required on Linux
-	set(LibACL_FIND_REQUIRED HAVE_LIBACL)
+        set(ENABLE_VFS_ACL ON)
+        set(USE_ACL_MAPPING ON)
+        # libacl only required on Linux
+        set(LibACL_FIND_REQUIRED HAVE_LIBACL)
       else(ENABLE_VFS_POSIX_ACL)
-	if(ENABLE_VFS_POSIX_ACL_REQUIRED)
-	  message(FATAL_ERROR "Missing VFS FSAL prerequisites, but requested on command line")
-	else(ENABLE_VFS_POSIX_ACL_REQUIRED)
-	  message(WARNING "Missing VFS FSAL prerequisites, disabling ENABLE_VFS_POSIX_ACL")
-	endif(ENABLE_VFS_POSIX_ACL_REQUIRED)
+        if(ENABLE_VFS_POSIX_ACL_REQUIRED)
+          message(FATAL_ERROR "Missing VFS FSAL prerequisites, but requested on command line")
+          else(ENABLE_VFS_POSIX_ACL_REQUIRED)
+            message(WARNING "Missing VFS FSAL prerequisites, disabling ENABLE_VFS_POSIX_ACL")
+          endif(ENABLE_VFS_POSIX_ACL_REQUIRED)
       endif(ENABLE_VFS_POSIX_ACL)
     endif(ENABLE_VFS_POSIX_ACL)
   endif(ENABLE_VFS_DEBUG_ACL)
@@ -729,9 +729,9 @@ if(USE_FSAL_LUSTRE)
     CHECK_LIBRARY_EXISTS(lustreapi llapi_hsm_state_get_fd "" USE_LLAPI)
     if(NOT USE_LLAPI)
       if(USE_FSAL_LUSTRE_REQUIRED)
-	message(FATAL_ERROR "Cannot find lustreapi, but requested on command line")
+        message(FATAL_ERROR "Cannot find lustreapi, but requested on command line")
       else(USE_FSAL_LUSTRE_REQUIRED)
-	message(WARNING "Cannot find lustreapi. We will only build a dummy lustre fsal.")
+        message(WARNING "Cannot find lustreapi. We will only build a dummy lustre fsal.")
       endif(USE_FSAL_LUSTRE_REQUIRED)
     endif(NOT USE_LLAPI)
 endif(USE_FSAL_LUSTRE)
@@ -864,19 +864,19 @@ if(USE_FSAL_GLUSTER)
     check_include_files("unistd.h;sys/xattr.h" HAVE_SYS_XATTR_H)
     if(NOT HAVE_SYS_XATTR_H)
       if(USE_FSAL_GLUSTER_REQUIRED)
-	message(FATAL_ERROR "Can not find sys/xattr.h, but GLUSTER requested on command line")
+        message(FATAL_ERROR "Can not find sys/xattr.h, but GLUSTER requested on command line")
       else(USE_FSAL_GLUSTER_REQUIRED)
         message(WARNING "Can not find sys/xattr.h, disabling GLUSTER fsal build")
         set(USE_FSAL_GLUSTER OFF)
       endif(USE_FSAL_GLUSTER_REQUIRED)
     endif(NOT HAVE_SYS_XATTR_H)
     if(HAVE_LIBACL)
-	set(USE_POSIX_ACLS ON)
-	set(USE_ACL_MAPPING ON)
+        set(USE_POSIX_ACLS ON)
+        set(USE_ACL_MAPPING ON)
     else(HAVE_LIBACL)
-	set(USE_POSIX_ACLS OFF)
-	set(USE_FSAL_GLUSTER OFF)
-	message(STATUS "Could not find libacl, disabling GLUSTER fsal build")
+        set(USE_POSIX_ACLS OFF)
+        set(USE_FSAL_GLUSTER OFF)
+        message(STATUS "Could not find libacl, disabling GLUSTER fsal build")
     endif(HAVE_LIBACL)
     check_library_exists(gfapi glfs_xreaddirplus_r ${GFAPI_LIBDIR} HAVE_XREADDIRPLUS)
     if(HAVE_XREADDIRPLUS)
@@ -887,11 +887,11 @@ if(USE_FSAL_GLUSTER)
     endif(HAVE_XREADDIRPLUS)
     check_library_exists(gfapi glfs_fd_set_lkowner ${GFAPI_LIBDIR} HAVE_LKOWNER)
     if(HAVE_LKOWNER)
-	set(USE_LKOWNER ON)
+        set(USE_LKOWNER ON)
     else()
-	set(USE_LKOWNER OFF)
-	set(USE_FSAL_GLUSTER OFF)
-	message(STATUS "lkowner support is needed to enable GLUSTER build")
+        set(USE_LKOWNER OFF)
+        set(USE_FSAL_GLUSTER OFF)
+        message(STATUS "lkowner support is needed to enable GLUSTER build")
     endif(HAVE_LKOWNER)
     check_library_exists(gfapi glfs_upcall_register ${GFAPI_LIBDIR} HAVE_REGISTER_UPCALL)
     if(HAVE_REGISTER_UPCALL)
@@ -1055,9 +1055,9 @@ if(USE_LTTNG)
     set(CMAKE_C_STANDARD_INCLUDE_DIRECTORIES ${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES})
 
     execute_process(
-	COMMAND ${CMAKE_COMMAND} -E make_directory
-		"${CMAKE_CURRENT_BINARY_DIR}/gsh_generated_include/gsh_lttng/generated_traces/"
-	COMMAND_ERROR_IS_FATAL ANY
+        COMMAND ${CMAKE_COMMAND} -E make_directory
+                "${CMAKE_CURRENT_BINARY_DIR}/gsh_generated_include/gsh_lttng/generated_traces/"
+        COMMAND_ERROR_IS_FATAL ANY
     )
 
     include_directories(
@@ -1206,20 +1206,20 @@ endif(USE_ADMIN_TOOLS)
 check_include_files("blkid/blkid.h" HAVE_LIBBLKID_H)
 find_library(LIBBLKID blkid)  # Management of Capabilities
 check_library_exists(
-	blkid
-	blkid_devno_to_devname
-	""
-	HAVE_LIBBLKID
-	)
+        blkid
+        blkid_devno_to_devname
+        ""
+        HAVE_LIBBLKID
+        )
 
 check_include_files("uuid/uuid.h" HAVE_LIBUUID_H)
 find_library(LIBUUID uuid)  # Management of Capabilities
 check_library_exists(
-	uuid
-	uuid_parse
-	""
-	HAVE_LIBUUID
-	)
+        uuid
+        uuid_parse
+        ""
+        HAVE_LIBUUID
+        )
 
 if(HAVE_LIBBLKID AND HAVE_LIBUUID AND HAVE_LIBBLKID_H AND HAVE_LIBUUID_H)
   # we have all the libraries and include files to use libblkid and libuuid
@@ -1242,25 +1242,25 @@ endif(HAVE_LIBBLKID AND HAVE_LIBUUID AND HAVE_LIBBLKID_H AND HAVE_LIBUUID_H)
 # check is daemon exists
 # I use check_library_exists there to be portab;e
 check_library_exists(
-	c
-	daemon
-	""
-	HAVE_DAEMON
-	)
+        c
+        daemon
+        ""
+        HAVE_DAEMON
+        )
 
 # Needs to be before ntirpc
 add_custom_target( rpm DEPENDS dist)
 add_custom_command(TARGET rpm
                   COMMAND sh -c "rpmbuild -ta ${PKG_NAME}"
-		  VERBATIM
-		  DEPENDS dist)
+                  VERBATIM
+                  DEPENDS dist)
 
 set(RPMDEST "--define '_srcrpmdir ${CMAKE_CURRENT_BINARY_DIR}'")
 add_custom_target( srpm DEPENDS dist)
 add_custom_command(TARGET srpm
                   COMMAND sh -c "rpmbuild ${RPMDEST} -ts ${PKG_NAME}"
-		  VERBATIM
-		  DEPENDS dist)
+                  VERBATIM
+                  DEPENDS dist)
 
 # Roll up required libraries
 
@@ -1306,7 +1306,7 @@ else (USE_SYSTEM_NTIRPC)
   set(USE_GSS ${USE_GSS} CACHE BOOL "Use GSS")
   set(USE_MONITORING ${USE_MONITORING} CACHE BOOL "Use Monitoring")
   set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
-	  "${GANESHA_TOP_CMAKE_DIR}/libntirpc/cmake/modules/")
+          "${GANESHA_TOP_CMAKE_DIR}/libntirpc/cmake/modules/")
   add_subdirectory(libntirpc)
   set(NTIRPC_LIBRARY ntirpc)
   if (USE_LTTNG)
@@ -1804,19 +1804,19 @@ endif(LSB_RELEASE_EXECUTABLE)
 
 
 if(COVERAGE)
-	find_program(LCOV_EXEC lcov)
-	find_program(GENHTML_EXEC genhtml)
-	if(LCOV_EXEC AND GENHTML_EXEC)
-		add_custom_target(lcov)
-		add_custom_command(TARGET lcov
-			COMMAND ${LCOV_EXEC} --capture --directory .
-			--output-file coverage.info
-			COMMAND ${GENHTML_EXEC} coverage.info
-			--output-directory ./coverage_html/
-			VERBATIM
-			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-			)
-	endif(LCOV_EXEC AND GENHTML_EXEC)
+        find_program(LCOV_EXEC lcov)
+        find_program(GENHTML_EXEC genhtml)
+        if(LCOV_EXEC AND GENHTML_EXEC)
+                add_custom_target(lcov)
+                add_custom_command(TARGET lcov
+                        COMMAND ${LCOV_EXEC} --capture --directory .
+                        --output-file coverage.info
+                        COMMAND ${GENHTML_EXEC} coverage.info
+                        --output-directory ./coverage_html/
+                        VERBATIM
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                        )
+        endif(LCOV_EXEC AND GENHTML_EXEC)
 endif(COVERAGE)
 
 ########### next target ###############
@@ -1902,7 +1902,7 @@ target_link_libraries(test_parsing
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
   configure_file(${GANESHA_TOP_CMAKE_DIR}/Doxyfile.in
-		 ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+                 ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
   add_custom_target(doc
     ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
