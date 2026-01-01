@@ -58,7 +58,9 @@
 #include "export_mgr.h"
 #include "uid2grp.h"
 #include "client_mgr.h"
+#ifdef USE_MONITORING
 #include "idmapper_monitoring.h"
+#endif
 
 #include "gsh_lttng/gsh_lttng.h"
 #if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
@@ -273,9 +275,11 @@ static void set_extended_groups(void)
 				    TRACE_INFO,
 				    "Failed to fetch managed_gids for uid={}",
 				    op_ctx->original_creds.caller_uid);
+#ifdef USE_MONITORING
 		idmapper_monitoring__resolution(IDMAPPING_UID_TO_GROUPLIST,
 						IDMAPPING_PWUTILS,
 						IDMAPPING_STATUS_FAILURE);
+#endif
 		/** @todo: do we really want to bail here? */
 		if (nfs_param.core_param.enable_rpc_cred_fallback) {
 			LogInfo(COMPONENT_DISPATCH,
@@ -305,9 +309,11 @@ static void set_extended_groups(void)
 	} else {
 		op_ctx->creds.caller_glen = op_ctx->caller_gdata->nbgroups;
 		op_ctx->creds.caller_garray = op_ctx->caller_gdata->groups;
+#ifdef USE_MONITORING
 		idmapper_monitoring__resolution(IDMAPPING_UID_TO_GROUPLIST,
 						IDMAPPING_PWUTILS,
 						IDMAPPING_STATUS_SUCCESS);
+#endif
 	}
 }
 
@@ -323,15 +329,19 @@ static void rpcsec_gss_fetch_managed_groups(char *principal)
 			     &op_ctx->caller_gdata)) {
 			LogInfo(COMPONENT_DISPATCH,
 				"Attempt to fetch managed groups failed");
+#ifdef USE_MONITORING
 			idmapper_monitoring__resolution(
 				IDMAPPING_UID_TO_GROUPLIST, IDMAPPING_PWUTILS,
 				IDMAPPING_STATUS_FAILURE);
+#endif /* USE_MONITORING */
 			op_ctx->creds.caller_glen = 0;
 			return;
 		}
+#ifdef USE_MONITORING
 		idmapper_monitoring__resolution(IDMAPPING_UID_TO_GROUPLIST,
 						IDMAPPING_PWUTILS,
 						IDMAPPING_STATUS_SUCCESS);
+#endif /* USE_MONITORING */
 	} else {
 #ifdef USE_NFSIDMAP
 		if (!principal2grp(principal, &op_ctx->caller_gdata,
@@ -339,20 +349,24 @@ static void rpcsec_gss_fetch_managed_groups(char *principal)
 				   op_ctx->original_creds.caller_gid)) {
 			LogInfo(COMPONENT_DISPATCH,
 				"Attempt to fetch managed groups failed");
+#ifdef USE_MONITORING
 			idmapper_monitoring__resolution(
 				IDMAPPING_PRINCIPAL_TO_GROUPLIST,
 				IDMAPPING_NFSIDMAP, IDMAPPING_STATUS_FAILURE);
+#endif /* USE_MONITORING */
 			op_ctx->creds.caller_glen = 0;
 			return;
 		}
+#ifdef USE_MONITORING
 		idmapper_monitoring__resolution(
 			IDMAPPING_PRINCIPAL_TO_GROUPLIST, IDMAPPING_NFSIDMAP,
 			IDMAPPING_STATUS_SUCCESS);
+#endif /* USE_MONITORING */
 #else
 		LogWarn(COMPONENT_DISPATCH,
 			"Unsupported code path for principal %s", principal);
 		op_ctx->creds.caller_glen = 0;
-#endif
+#endif /* USE_NFSIDMAP */
 	}
 }
 #endif
@@ -544,17 +558,21 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 		if (!principal2uid(principal,
 				   &op_ctx->original_creds.caller_uid,
 				   &op_ctx->original_creds.caller_gid, gd)) {
+#ifdef USE_MONITORING
 			idmapper_monitoring__resolution(
 				IDMAPPING_PRINCIPAL_TO_UIDGID,
 				IDMAPPING_WINBIND, IDMAPPING_STATUS_FAILURE);
+#endif /* USE_MONITORING */
 #else
 		if (!principal2uid(principal,
 				   &op_ctx->original_creds.caller_uid,
 				   &op_ctx->original_creds.caller_gid)) {
+#ifdef USE_MONITORING
 			idmapper_monitoring__resolution(
 				IDMAPPING_PRINCIPAL_TO_UIDGID,
 				IDMAPPING_PWUTILS, IDMAPPING_STATUS_FAILURE);
-#endif
+#endif /* USE_MONITORING */
+#endif /* _MSPAC_SUPPORT */
 			LogInfo(COMPONENT_IDMAPPER,
 				"Could not map principal %s to uid", principal);
 			/* For compatibility with Linux knfsd, we set
@@ -570,6 +588,7 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 			    principal, op_ctx->original_creds.caller_uid,
 			    op_ctx->original_creds.caller_gid);
 
+#ifdef USE_MONITORING
 		idmapper_monitoring__resolution(IDMAPPING_PRINCIPAL_TO_UIDGID,
 #if _MSPAC_SUPPORT
 						IDMAPPING_WINBIND,
@@ -577,6 +596,7 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 						IDMAPPING_PWUTILS,
 #endif
 						IDMAPPING_STATUS_SUCCESS);
+#endif /* USE_MONITORING */
 
 		op_ctx->cred_flags |= CREDS_LOADED | MANAGED_GIDS;
 		auth_label = "RPCSEC_GSS";

@@ -47,7 +47,9 @@
 #include "abstract_atomic.h"
 #include "nfs_core.h"
 #include <misc/queue.h>
+#ifdef USE_MONITORING
 #include "idmapper_monitoring.h"
+#endif
 #ifdef USE_DBUS
 #include "gsh_dbus.h"
 #endif
@@ -188,9 +190,11 @@ static void uid2grp_remove_user(struct cache_info *info)
 	 */
 	uid2grp_release_group_data(info->gdata);
 	gsh_free(info);
+#ifdef USE_MONITORING
 	idmapper_monitoring__cache_entries_total_set(
 		IDMAPPING_CACHE_ENTITY_USER_GROUPS,
 		(int64_t)avltree_size(&uname_tree));
+#endif
 }
 
 /**
@@ -211,8 +215,10 @@ void uid2grp_cache_reap(void)
 		if (!uid2grp_is_group_data_expired(groups->gdata))
 			break;
 		uid2grp_remove_user(groups);
+#ifdef USE_MONITORING
 		idmapper_monitoring__reaped_cache_entity(
 			IDMAPPING_CACHE_ENTITY_USER_GROUPS);
+#endif
 		groups = TAILQ_FIRST(&groups_fifo_queue);
 	}
 	PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
@@ -302,12 +308,16 @@ void uid2grp_add_user(struct group_data *gdata)
 		const time_t cached_duration =
 			time(NULL) - groups_fifo_queue_head_node->gdata->epoch;
 		uid2grp_remove_user(groups_fifo_queue_head_node);
+#ifdef USE_MONITORING
 		idmapper_monitoring__evicted_cache_entity(
 			IDMAPPING_CACHE_ENTITY_USER_GROUPS, cached_duration);
+#endif
 	}
+#ifdef USE_MONITORING
 	idmapper_monitoring__cache_entries_total_set(
 		IDMAPPING_CACHE_ENTITY_USER_GROUPS,
 		(int64_t)avltree_size(&uname_tree));
+#endif
 
 	if (name_node && id_node)
 		LogWarn(COMPONENT_IDMAPPER, "shouldn't happen, internal error");

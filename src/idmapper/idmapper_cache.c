@@ -50,7 +50,9 @@
 #include "nfs_core.h"
 #include "abstract_atomic.h"
 #include "server_stats_private.h"
+#ifdef USE_MONITORING
 #include "idmapper_monitoring.h"
+#endif
 
 /**
  * @brief User entry in the IDMapper cache
@@ -278,9 +280,11 @@ static void remove_cache_user(struct cache_user *user)
 	}
 	/* Remove from users fifo queue */
 	TAILQ_REMOVE(&user_fifo_queue, user, queue_entry);
+#ifdef USE_MONITORING
 	idmapper_monitoring__cache_entries_total_set(
 		IDMAPPING_CACHE_ENTITY_USER,
 		(int64_t)avltree_size(&uname_tree));
+#endif
 	gsh_free(user);
 }
 
@@ -296,9 +300,11 @@ static void remove_cache_group(struct cache_group *group)
 	avltree_remove(&group->gname_node, &gname_tree);
 	/* Remove from groups fifo queue */
 	TAILQ_REMOVE(&group_fifo_queue, group, queue_entry);
+#ifdef USE_MONITORING
 	idmapper_monitoring__cache_entries_total_set(
 		IDMAPPING_CACHE_ENTITY_GROUP,
 		(int64_t)avltree_size(&gname_tree));
+#endif
 	gsh_free(group);
 }
 
@@ -321,8 +327,10 @@ static void reap_users_cache(void)
 		if (!user_expired(user))
 			break;
 		remove_cache_user(user);
+#ifdef USE_MONITORING
 		idmapper_monitoring__reaped_cache_entity(
 			IDMAPPING_CACHE_ENTITY_USER);
+#endif
 		user = TAILQ_FIRST(&user_fifo_queue);
 	}
 	PTHREAD_RWLOCK_unlock(&idmapper_user_lock);
@@ -349,8 +357,10 @@ static void reap_groups_cache(void)
 		if (!group_expired(group))
 			break;
 		remove_cache_group(group);
+#ifdef USE_MONITORING
 		idmapper_monitoring__reaped_cache_entity(
 			IDMAPPING_CACHE_ENTITY_GROUP);
+#endif
 		group = TAILQ_FIRST(&group_fifo_queue);
 	}
 	PTHREAD_RWLOCK_unlock(&idmapper_group_lock);
@@ -502,13 +512,17 @@ add_to_queue:
 		const time_t cached_duration =
 			time(NULL) - user_fifo_queue_head_node->epoch;
 		remove_cache_user(user_fifo_queue_head_node);
+#ifdef USE_MONITORING
 		idmapper_monitoring__evicted_cache_entity(
 			IDMAPPING_CACHE_ENTITY_USER, cached_duration);
+#endif
 	}
 
+#ifdef USE_MONITORING
 	idmapper_monitoring__cache_entries_total_set(
 		IDMAPPING_CACHE_ENTITY_USER,
 		(int64_t)avltree_size(&uname_tree));
+#endif
 	return true;
 }
 
@@ -581,15 +595,21 @@ bool idmapper_add_group(const struct gsh_buffdesc *name, const gid_t gid)
 			COMPONENT_IDMAPPER,
 			"Cache size limit violated, removing group with least time validity");
 		group_fifo_queue_head_node = TAILQ_FIRST(&group_fifo_queue);
+#ifdef USE_MONITORING
 		const time_t cached_duration =
 			time(NULL) - group_fifo_queue_head_node->epoch;
+#endif
 		remove_cache_group(group_fifo_queue_head_node);
+#ifdef USE_MONITORING
 		idmapper_monitoring__evicted_cache_entity(
 			IDMAPPING_CACHE_ENTITY_GROUP, cached_duration);
+#endif
 	}
+#ifdef USE_MONITORING
 	idmapper_monitoring__cache_entries_total_set(
 		IDMAPPING_CACHE_ENTITY_GROUP,
 		(int64_t)avltree_size(&gname_tree));
+#endif
 	return true;
 }
 
@@ -644,8 +664,10 @@ bool idmapper_lookup_by_uname(const struct gsh_buffdesc *name, uid_t *uid,
 		*gid = (found_user->gid_set ? &found_user->gid : NULL);
 
 	const bool is_cache_hit = user_expired(found_user) ? false : true;
+#ifdef USE_MONITORING
 	idmapper_monitoring__cache_usage(IDMAPPING_USERNAME_TO_USER_CACHE,
 					 is_cache_hit);
+#endif
 	return is_cache_hit;
 }
 
@@ -698,8 +720,10 @@ bool idmapper_lookup_by_uid(const uid_t uid, const struct gsh_buffdesc **name,
 		*gid = (found_user->gid_set ? &found_user->gid : NULL);
 
 	const bool is_cache_hit = user_expired(found_user) ? false : true;
+#ifdef USE_MONITORING
 	idmapper_monitoring__cache_usage(IDMAPPING_UID_TO_USER_CACHE,
 					 is_cache_hit);
+#endif
 	return is_cache_hit;
 }
 
@@ -745,8 +769,10 @@ bool idmapper_lookup_by_gname(const struct gsh_buffdesc *name, uid_t *gid)
 		LogDebug(COMPONENT_IDMAPPER, "Caller is being weird.");
 
 	const bool is_cache_hit = group_expired(found_group) ? false : true;
+#ifdef USE_MONITORING
 	idmapper_monitoring__cache_usage(IDMAPPING_GROUPNAME_TO_GROUP_CACHE,
 					 is_cache_hit);
+#endif
 	return is_cache_hit;
 }
 
@@ -796,8 +822,10 @@ bool idmapper_lookup_by_gid(const gid_t gid, const struct gsh_buffdesc **name)
 		LogDebug(COMPONENT_IDMAPPER, "Caller is being weird.");
 
 	const bool is_cache_hit = group_expired(found_group) ? false : true;
+#ifdef USE_MONITORING
 	idmapper_monitoring__cache_usage(IDMAPPING_GID_TO_GROUP_CACHE,
 					 is_cache_hit);
+#endif
 	return is_cache_hit;
 }
 

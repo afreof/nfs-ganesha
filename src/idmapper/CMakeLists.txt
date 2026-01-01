@@ -37,10 +37,12 @@ SET(idmap_STAT_SRCS
    idmapper.c
    idmapper_cache.c
    idmapper_negative_cache.c
-   idmapper_monitoring.c
    pwnam_wrappers.c
    sss_nss_idmap.c
 )
+if (USE_MONITORING)
+  list(APPEND idmap_STAT_SRCS idmapper_monitoring.c)
+endif (USE_MONITORING)
 
 add_library(idmap OBJECT ${idmap_STAT_SRCS})
 add_sanitizers(idmap)

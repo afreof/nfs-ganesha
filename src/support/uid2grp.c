@@ -52,7 +52,9 @@
 #ifdef USE_NFSIDMAP
 #include <nfsidmap.h>
 #endif
+#ifdef USE_MONITORING
 #include "idmapper_monitoring.h"
+#endif
 
 #include "gsh_lttng/gsh_lttng.h"
 #if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
@@ -136,9 +138,11 @@ static bool my_getgrouplist_alloc(char *user, gid_t gid,
 	now(&s_time);
 	ret = pwnam_wrappers__getgrouplist(user, gid, groups, &ngroups);
 	now(&e_time);
+#ifdef USE_MONITORING
 	idmapper_monitoring__external_request(IDMAPPING_USERNAME_TO_GROUPLIST,
 					      IDMAPPING_PWUTILS, ret == 0,
 					      &s_time, &e_time);
+#endif
 	GSH_AUTO_TRACEPOINT(uid2grp, getgrouplist_call, TRACE_INFO,
 			    "getgrouplist returned {}, ngroups={} ", ret,
 			    ngroups);
@@ -156,16 +160,20 @@ static bool my_getgrouplist_alloc(char *user, gid_t gid,
 		 * groups. */
 		if (ngroups > max_groups_membership) {
 			ngroups = max_groups_membership;
+#ifdef USE_MONITORING
 			idmapper_monitoring__max_groups_exceeded_inc();
+#endif
 		}
 		groups = gsh_malloc(ngroups * sizeof(gid_t));
 
 		now(&s_time);
 		ret = pwnam_wrappers__getgrouplist(user, gid, groups, &ngroups);
 		now(&e_time);
+#ifdef USE_MONITORING
 		idmapper_monitoring__external_request(
 			IDMAPPING_USERNAME_TO_GROUPLIST, IDMAPPING_PWUTILS,
 			ret == 0, &s_time, &e_time);
+#endif
 
 		if (ret != 0) {
 			LogWarn(COMPONENT_IDMAPPER,
@@ -186,7 +194,9 @@ static bool my_getgrouplist_alloc(char *user, gid_t gid,
 		}
 	}
 
+#ifdef USE_MONITORING
 	idmapper_monitoring__user_groups(ngroups);
+#endif
 	LogInfo(COMPONENT_IDMAPPER,
 		"getgrouplist for uname: %s, returned %d groups", user,
 		ngroups);
@@ -243,9 +253,11 @@ uid2grp_allocate_by_name(const struct gsh_buffdesc *name)
 		retval = pwnam_wrappers__getpwnam_r(namebuff, &p, buff,
 						    buff_size, &pp);
 		now_mono(&e_time);
+#ifdef USE_MONITORING
 		idmapper_monitoring__external_request(
 			IDMAPPING_USERNAME_TO_UIDGID, IDMAPPING_PWUTILS,
 			retval == 0, &s_time, &e_time);
+#endif
 		GSH_AUTO_TRACEPOINT(
 			uid2grp, getpwnam_r_call, TRACE_INFO,
 			"getpwnam_r returned: {} for uname: {}", retval,
@@ -337,7 +349,9 @@ static struct group_data *uid2grp_allocate_by_uid(uid_t uid)
 	char *buff;
 	size_t buff_size;
 	int retval;
+#ifdef USE_MONITORING
 	struct timespec s_time, e_time;
+#endif
 	size_t uname_len;
 
 	buff_size = sysconf(_SC_GETPW_R_SIZE_MAX);
@@ -348,14 +362,18 @@ static struct group_data *uid2grp_allocate_by_uid(uid_t uid)
 
 	while (buff_size <= PWENT_MAX_SIZE) {
 		buff = gsh_malloc(buff_size);
+#ifdef USE_MONITORING
 		now_mono(&s_time);
+#endif
 		retval = pwnam_wrappers__getpwuid_r(uid, &p, buff, buff_size,
 						    &pp);
+#ifdef USE_MONITORING
 		now_mono(&e_time);
 		idmapper_monitoring__external_request(IDMAPPING_UID_TO_UNAME,
 						      IDMAPPING_PWUTILS,
 						      retval == 0, &s_time,
 						      &e_time);
+#endif
 
 		GSH_AUTO_TRACEPOINT(uid2grp, getpwuid_r_call, TRACE_INFO,
 				    "getpwuid_r returned: {} for uid: {}",
@@ -457,7 +475,9 @@ static struct group_data *uid2grp_allocate_by_principal(char *principal,
 	int ngroups = MIN(default_ngroups, max_groups_membership);
 	gid_t *groups = NULL;
 	int ret;
+#ifdef USE_MONITORING
 	struct timespec s_time, e_time;
+#endif
 	size_t principal_len;
 
 #ifdef _MSPAC_SUPPORT
@@ -476,12 +496,16 @@ static struct group_data *uid2grp_allocate_by_principal(char *principal,
 	 * the groups when ngroups is greater than 1000.
 	 */
 	groups = gsh_malloc(ngroups * sizeof(gid_t));
+#ifdef USE_MONITORING
 	now_mono(&s_time);
+#endif
 	ret = nfs4_gss_princ_to_grouplist("krb5", principal, groups, &ngroups);
+#ifdef USE_MONITORING
 	now_mono(&e_time);
 	idmapper_monitoring__external_request(IDMAPPING_PRINCIPAL_TO_GROUPLIST,
 					      IDMAPPING_NFSIDMAP, ret == 0,
 					      &s_time, &e_time);
+#endif
 
 	if (ret == -ERANGE) {
 		/* Try with the actual ngroups since user is part of more than
@@ -490,17 +514,23 @@ static struct group_data *uid2grp_allocate_by_principal(char *principal,
 		gsh_free(groups);
 		if (ngroups > max_groups_membership) {
 			ngroups = max_groups_membership;
+#ifdef USE_MONITORING
 			idmapper_monitoring__max_groups_exceeded_inc();
+#endif
 		}
 		groups = gsh_malloc(ngroups * sizeof(gid_t));
 
+#ifdef USE_MONITORING
 		now_mono(&s_time);
+#endif
 		ret = nfs4_gss_princ_to_grouplist("krb5", principal, groups,
 						  &ngroups);
+#ifdef USE_MONITORING
 		now_mono(&e_time);
 		idmapper_monitoring__external_request(
 			IDMAPPING_PRINCIPAL_TO_GROUPLIST, IDMAPPING_NFSIDMAP,
 			ret == 0, &s_time, &e_time);
+#endif
 		if (ret) {
 			if (ret == -ERANGE) {
 				LogWarn(COMPONENT_IDMAPPER,
@@ -525,7 +555,9 @@ static struct group_data *uid2grp_allocate_by_principal(char *principal,
 		 "Resolved principal %s to %d groups using nfsidmap", principal,
 		 ngroups);
 
+#ifdef USE_MONITORING
 	idmapper_monitoring__user_groups(ngroups);
+#endif
 
 	/* Resize or free the buffer as appropriate */
 	if (ngroups != 0) {
@@ -617,8 +649,10 @@ bool uname2grp(const struct gsh_buffdesc *name, struct group_data **gdata)
 	PTHREAD_RWLOCK_rdlock(&uid2grp_user_lock);
 	success = uid2grp_lookup_by_uname(name, &uid, gdata);
 	is_cache_hit = success && !uid2grp_is_group_data_expired(*gdata);
+#ifdef USE_MONITORING
 	idmapper_monitoring__cache_usage(IDMAPPING_USER_GROUPS_CACHE,
 					 is_cache_hit);
+#endif
 
 	if (is_cache_hit) {
 		/* Return success if we find non-expired group-data in cache */
@@ -698,8 +732,10 @@ bool uid2grp(uid_t uid, struct group_data **gdata)
 	PTHREAD_RWLOCK_rdlock(&uid2grp_user_lock);
 	success = uid2grp_lookup_by_uid(uid, gdata);
 	is_cache_hit = success && !uid2grp_is_group_data_expired(*gdata);
+#ifdef USE_MONITORING
 	idmapper_monitoring__cache_usage(IDMAPPING_USER_GROUPS_CACHE,
 					 is_cache_hit);
+#endif
 
 	if (is_cache_hit) {
 		/* Return success if we find non-expired group-data in cache */
@@ -774,8 +810,10 @@ bool principal2grp(char *principal, struct group_data **gdata, const uid_t uid,
 	success =
 		uid2grp_lookup_by_uname(&princbuff, &unused_cached_uid, gdata);
 	is_cache_hit = success && !uid2grp_is_group_data_expired(*gdata);
+#ifdef USE_MONITORING
 	idmapper_monitoring__cache_usage(IDMAPPING_USER_GROUPS_CACHE,
 					 is_cache_hit);
+#endif
 
 	if (is_cache_hit) {
 		/* Return success if we find non-expired group-data in cache */

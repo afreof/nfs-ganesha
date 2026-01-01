@@ -40,7 +40,9 @@
 #include "idmapper.h"
 #include "nfs_core.h"
 #include <misc/queue.h>
+#ifdef USE_MONITORING
 #include "idmapper_monitoring.h"
+#endif
 #ifdef USE_DBUS
 #include "gsh_dbus.h"
 #endif
@@ -126,23 +128,31 @@ remove_negative_cache_entity(negative_cache_entity_t *entity,
 {
 	struct avltree *cache_tree;
 	struct idmapping_negative_cache_queue *cache_queue;
+#ifdef USE_MONITORING
 	idmapping_cache_entity_t idmapping_cache_entity;
+#endif
 
 	switch (entity_type) {
 	case USERNAME:
 		cache_tree = &uname_tree;
 		cache_queue = &negative_user_fifo_queue;
+#ifdef USE_MONITORING
 		idmapping_cache_entity = IDMAPPING_CACHE_ENTITY_NEGATIVE_USER;
+#endif
 		break;
 	case GROUP:
 		cache_tree = &gname_tree;
 		cache_queue = &negative_group_fifo_queue;
+#ifdef USE_MONITORING
 		idmapping_cache_entity = IDMAPPING_CACHE_ENTITY_NEGATIVE_GROUP;
+#endif
 		break;
 	case UID:
 		cache_tree = &uid_tree;
 		cache_queue = &negative_uid_fifo_queue;
+#ifdef USE_MONITORING
 		idmapping_cache_entity = IDMAPPING_CACHE_ENTITY_NEGATIVE_UID;
+#endif
 		break;
 	default:
 		LogFatal(COMPONENT_IDMAPPER,
@@ -150,8 +160,10 @@ remove_negative_cache_entity(negative_cache_entity_t *entity,
 	}
 	avltree_remove(&entity->name_node, cache_tree);
 	TAILQ_REMOVE(cache_queue, entity, queue_entry);
+#ifdef USE_MONITORING
 	idmapper_monitoring__cache_entries_total_set(idmapping_cache_entity,
 						     avltree_size(cache_tree));
+#endif
 	gsh_free(entity);
 }
 
@@ -168,23 +180,31 @@ reap_negative_cache_entities(negative_cache_entity_type_t entity_type)
 	struct negative_cache_entity *entity;
 	struct idmapping_negative_cache_queue *cache_queue;
 	pthread_rwlock_t *entity_lock;
+#ifdef USE_MONITORING
 	idmapping_cache_entity_t idmapping_cache_entity;
+#endif
 
 	switch (entity_type) {
 	case USERNAME:
 		cache_queue = &negative_user_fifo_queue;
 		entity_lock = &idmapper_negative_cache_user_lock;
+#ifdef USE_MONITORING
 		idmapping_cache_entity = IDMAPPING_CACHE_ENTITY_NEGATIVE_USER;
+#endif
 		break;
 	case GROUP:
 		cache_queue = &negative_group_fifo_queue;
 		entity_lock = &idmapper_negative_cache_group_lock;
+#ifdef USE_MONITORING
 		idmapping_cache_entity = IDMAPPING_CACHE_ENTITY_NEGATIVE_GROUP;
+#endif
 		break;
 	case UID:
 		cache_queue = &negative_uid_fifo_queue;
 		entity_lock = &idmapper_negative_cache_uid_lock;
+#ifdef USE_MONITORING
 		idmapping_cache_entity = IDMAPPING_CACHE_ENTITY_NEGATIVE_UID;
+#endif
 		break;
 	default:
 		LogFatal(COMPONENT_IDMAPPER,
@@ -197,8 +217,10 @@ reap_negative_cache_entities(negative_cache_entity_type_t entity_type)
 		if (!is_negative_cache_entity_expired(entity))
 			break;
 		remove_negative_cache_entity(entity, entity_type);
+#ifdef USE_MONITORING
 		idmapper_monitoring__reaped_cache_entity(
 			idmapping_cache_entity);
+#endif
 		entity = TAILQ_FIRST(cache_queue);
 	}
 	PTHREAD_RWLOCK_unlock(entity_lock);
@@ -318,13 +340,17 @@ void idmapper_negative_cache_add_user_by_uid(uid_t uid)
 		const time_t cached_duration =
 			time(NULL) - cache_queue_head->epoch;
 		remove_negative_cache_entity(cache_queue_head, UID);
+#ifdef USE_MONITORING
 		idmapper_monitoring__evicted_cache_entity(
 			IDMAPPING_CACHE_ENTITY_NEGATIVE_UID, cached_duration);
+#endif
 	}
 
+#ifdef USE_MONITORING
 	idmapper_monitoring__cache_entries_total_set(
 		IDMAPPING_CACHE_ENTITY_NEGATIVE_UID,
 		(int64_t)avltree_size(&uid_tree));
+#endif
 }
 
 /**
@@ -345,7 +371,9 @@ static void idmapper_negative_cache_add_entity_by_name(
 	negative_cache_entity_t *old_entity, *new_entity, *cache_queue_head;
 	uint32_t max_cache_entities;
 	char *entity_type_string;
+#ifdef USE_MONITORING
 	idmapping_cache_entity_t idmapping_cache_entity;
+#endif
 
 	new_entity = gsh_malloc(sizeof(negative_cache_entity_t) + name->len);
 	new_entity->name.addr = new_entity->name_buffer;
@@ -360,7 +388,9 @@ static void idmapper_negative_cache_add_entity_by_name(
 		max_cache_entities = nfs_param.directory_services_param
 					     .negative_cache_users_max_count;
 		entity_type_string = (char *)"user";
+#ifdef USE_MONITORING
 		idmapping_cache_entity = IDMAPPING_CACHE_ENTITY_NEGATIVE_USER;
+#endif
 		break;
 	case GROUP:
 		cache_tree = &gname_tree;
@@ -368,7 +398,9 @@ static void idmapper_negative_cache_add_entity_by_name(
 		max_cache_entities = nfs_param.directory_services_param
 					     .negative_cache_groups_max_count;
 		entity_type_string = (char *)"group";
+#ifdef USE_MONITORING
 		idmapping_cache_entity = IDMAPPING_CACHE_ENTITY_NEGATIVE_GROUP;
+#endif
 		break;
 	case UID:
 		LogFatal(COMPONENT_IDMAPPER, "UID entity add attempt by name");
@@ -404,12 +436,16 @@ static void idmapper_negative_cache_add_entity_by_name(
 		const time_t cached_duration =
 			time(NULL) - cache_queue_head->epoch;
 		remove_negative_cache_entity(cache_queue_head, entity_type);
+#ifdef USE_MONITORING
 		idmapper_monitoring__evicted_cache_entity(
 			idmapping_cache_entity, cached_duration);
+#endif
 	}
 
+#ifdef USE_MONITORING
 	idmapper_monitoring__cache_entries_total_set(
 		idmapping_cache_entity, (int64_t)avltree_size(cache_tree));
+#endif
 }
 
 /**
@@ -454,16 +490,20 @@ bool idmapper_negative_cache_lookup_user_by_uid(uid_t uid)
 
 	cache_node = avltree_lookup(&prototype.name_node, &uid_tree);
 	if (!cache_node) {
+#ifdef USE_MONITORING
 		idmapper_monitoring__cache_usage(
 			IDMAPPING_NEGATIVE_UID_TO_USER_CACHE, false);
+#endif
 		return false;
 	}
 
 	cache_entity = avltree_container_of(cache_node, negative_cache_entity_t,
 					    name_node);
 	is_cache_hit = !is_negative_cache_entity_expired(cache_entity);
+#ifdef USE_MONITORING
 	idmapper_monitoring__cache_usage(IDMAPPING_NEGATIVE_UID_TO_USER_CACHE,
 					 is_cache_hit);
+#endif
 	return is_cache_hit;
 }
 
@@ -512,14 +552,18 @@ static bool idmapper_negative_cache_lookup_entity_by_name(
 
 	switch (entity_type) {
 	case USERNAME:
+#ifdef USE_MONITORING
 		idmapper_monitoring__cache_usage(
 			IDMAPPING_NEGATIVE_USERNAME_TO_USER_CACHE,
 			is_cache_hit);
+#endif
 		break;
 	case GROUP:
+#ifdef USE_MONITORING
 		idmapper_monitoring__cache_usage(
 			IDMAPPING_NEGATIVE_GROUPNAME_TO_GROUP_CACHE,
 			is_cache_hit);
+#endif
 		break;
 	case UID:
 		LogFatal(COMPONENT_IDMAPPER,
