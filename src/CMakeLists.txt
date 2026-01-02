@@ -1263,16 +1263,13 @@ if(USE_9P_RDMA)
   link_directories (${MOOSHIKA_LIBRARY_DIRS})
 endif(USE_9P_RDMA)
 
-set(NTIRPC_MIN_VERSION 5.0)
+set(NTIRPC_MIN_VERSION 7.0)
 if (USE_SYSTEM_NTIRPC)
   find_package(NTIRPC ${NTIRPC_MIN_VERSION} REQUIRED)
-  if (USE_LTTNG)
-    set(NTIRPC_LIBRARY ${NTIRPC_LIBRARY} ${NTIRPC_LTTNG})
-    set(USE_LTTNG_NTIRPC ON)
-  endif (USE_LTTNG)
-  if (USE_MONITORING)
-    set(NTIRPC_LIBRARY ${NTIRPC_LIBRARY} ${NTIRPC_MONITORING})
-  endif (USE_MONITORING)
+  # Create an interface target for NTIRPC
+  add_library(ntirpc_interface INTERFACE)
+  target_link_libraries(ntirpc_interface INTERFACE NTIRPC::ntirpc)
+  target_include_directories(ntirpc_interface INTERFACE ${NTIRPC_INCLUDE_DIRS}/ntirpc)
 else (USE_SYSTEM_NTIRPC)
   # Set options for submodule
   set(USE_RPC_RDMA ${USE_NFS_RDMA} CACHE BOOL "Use RDMA")
@@ -1282,15 +1279,21 @@ else (USE_SYSTEM_NTIRPC)
   set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
           "${GANESHA_TOP_CMAKE_DIR}/libntirpc/cmake/modules/")
   add_subdirectory(libntirpc)
-  set(NTIRPC_LIBRARY ntirpc)
+  # Create aliases for consistent target names
+  add_library(NTIRPC::ntirpc ALIAS ntirpc)
+  # Create an interface target for NTIRPC
+  add_library(ntirpc_interface INTERFACE)
+  target_link_libraries(ntirpc_interface INTERFACE NTIRPC::ntirpc)
   if (USE_LTTNG)
-    set(NTIRPC_LIBRARY ${NTIRPC_LIBRARY} ntirpc_lttng)
+    add_library(NTIRPC::ntirpc_lttng ALIAS ntirpc_lttng)
+    target_link_libraries(ntirpc_interface INTERFACE NTIRPC::ntirpc_lttng)
   endif (USE_LTTNG)
-  set(NTIRPC_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libntirpc/ntirpc/")
+  if (USE_MONITORING)
+    add_library(NTIRPC::ntirpcmonitoring ALIAS ntirpcmonitoring)
+    target_link_libraries(ntirpc_interface INTERFACE NTIRPC::ntirpcmonitoring)
+  endif (USE_MONITORING)
   message(STATUS "Using ntirpc submodule")
 endif (USE_SYSTEM_NTIRPC)
-message(${NTIRPC_INCLUDE_DIR})
-include_directories(${NTIRPC_INCLUDE_DIR})
 
 find_library(LIBURCU_LIB urcu-bp)
 if (NOT LIBURCU_LIB)
@@ -1305,7 +1308,7 @@ check_symbol_exists(urcu_ref_get_unless_zero urcu/ref.h HAVE_URCU_REF_GET_UNLESS
 
 # All the plumbing in the basement
 set(SYSTEM_LIBRARIES
-  ${NTIRPC_LIBRARY}
+  ntirpc_interface
   ${SYSTEM_LIBRARIES}
   ${CMAKE_DL_LIBS}
   ${KRB5_LIBRARIES}
